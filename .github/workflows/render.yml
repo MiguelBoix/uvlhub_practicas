@@ -1,21 +1,39 @@
 name: Deploy to Render
 
 on:
-    push:
-      branches:
-        - main
-    pull_request:
-      branches:
-        - main
+  push:
+    tags:
+      - '*'
 
 jobs:
-
   deploy:
     name: Deploy to Render
     runs-on: ubuntu-24.04
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v5
+
+      - name: Check Codacy CI
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHA="${{ github.sha }}"
+
+          echo "Checking Codacy CI for commit $SHA..."
+
+          STATUS=$(gh run list \
+            --workflow "Codacy CI" \
+            --commit "$SHA" \
+            --json status,conclusion \
+            --jq 'if length > 0 then .[0].conclusion else "not_found" end')
+
+          echo "Codacy CI result: $STATUS"
+
+          if [ "$STATUS" != "success" ]; then
+            echo "Codacy CI has not passed for this commit."
+            exit 1
+          fi
 
       - name: Deploy to Render
         env:
