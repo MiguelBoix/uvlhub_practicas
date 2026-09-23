@@ -59,7 +59,7 @@ jobs:
 
       - name: Run security audit
         run: |
-          pip-audit
+          pip-audit --skip-editable
 
       # 2. Ejecutar tests con la versión de Python de la matriz
       - name: Run tests with coverage
